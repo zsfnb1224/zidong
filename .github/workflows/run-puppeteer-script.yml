@@ -1,0 +1,101 @@
+const puppeteer = require('puppeteer');
+const fs = require('fs');  // 引入 Node.js 的文件系统模块
+
+// 生成一个随机的 6 位字母和数字的组合
+function generateRandomEmail() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let email = '';
+  for (let i = 0; i < 6; i++) {
+    email += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return email + '@666.com';  // 返回随机邮箱
+}
+
+const username = 'your-username';  // 用你实际的用户名
+const password = '@zsfan6661224666';  // 用你实际的密码
+
+(async () => {
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+
+  // 打开注册页面
+  await page.goto('https://coke.buyzur.com/#/register', { waitUntil: 'domcontentloaded' });
+
+  // 等待页面加载并显示输入框
+  await page.waitForSelector('input[name="username"]');  // 确保页面已加载
+
+  // 生成随机邮箱
+  const randomEmail = generateRandomEmail();
+  console.log(`Generated random email: ${randomEmail}`);
+
+  // 填写注册表单
+  await page.type('input[name="username"]', username);  // 填写用户名
+  await page.type('input[name="email"]', randomEmail);  // 填写随机生成的邮箱
+  await page.type('input[name="password"]', password);  // 填写密码
+  await page.type('input[name="confirmPassword"]', password);  // 填写确认密码
+
+  // 勾选 "我已阅读并同意服务条款" 复选框
+  await page.click('input[type="checkbox"]');  // 假设复选框是 <input type="checkbox">，你可以根据实际情况调整选择器
+
+  // 点击注册按钮
+  await page.click('button[type="submit"]');  // 假设注册按钮是 <button type="submit">
+
+  // 等待注册后的页面跳转或加载
+  await page.waitForNavigation({ waitUntil: 'networkidle0' });
+
+  // 打印注册成功信息
+  console.log('Registration completed');
+
+  // 打开登录页面
+  await page.goto('https://coke.buyzur.com/#/login', { waitUntil: 'domcontentloaded' });
+
+  // 填写登录表单
+  await page.type('input[name="email"]', randomEmail);  // 使用刚才注册的随机邮箱
+  await page.type('input[name="password"]', password);  // 使用相同的密码
+
+  // 点击登录按钮
+  await page.click('button[type="submit"]');  // 假设登录按钮是 <button type="submit">
+
+  // 等待登录后的页面跳转或加载
+  await page.waitForNavigation({ waitUntil: 'networkidle0' });
+
+  // 打印登录成功信息
+  console.log('Login successful');
+
+  // 等待复制按钮可点击，假设复制按钮选择器是 `.copy-btn`
+  await page.waitForSelector('.copy-btn');  // 等待复制按钮出现
+
+  // 点击复制按钮
+  await page.click('.copy-btn');  // 假设复制按钮是 <button class="copy-btn">
+
+  // 等待复制后的操作完成（如果有弹窗或反馈）
+  await page.waitForTimeout(1000);  // 等待 1 秒，具体根据实际情况可以调整
+
+  // 获取复制的链接内容（假设复制的内容是一个 URL）
+  const copiedLink = await page.evaluate(() => {
+    return navigator.clipboard.readText();  // 读取剪贴板内容
+  });
+
+  // 打印复制的链接
+  console.log('Copied link:', copiedLink);
+
+  // 打开复制的链接页面
+  await page.goto(copiedLink, { waitUntil: 'domcontentloaded' });
+
+  // 获取页面的所有文本内容
+  const pageContent = await page.evaluate(() => {
+    return document.body.innerText;  // 获取页面的所有文本内容
+  });
+
+  // 打印获取的页面内容
+  console.log('Page content:', pageContent);
+
+  // 将页面内容写入到 GitHub 项目的根目录下的 6.txt 文件
+  fs.writeFileSync('./6.txt', pageContent, 'utf8');  // 使用同步方法写入文件
+
+  // 打印文件写入成功信息
+  console.log('Page content saved to 6.txt');
+
+  // 关闭浏览器
+  await browser.close();
+})();
